@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: climate-resilience-index
+    runtime: python
+    buildCommand: pip install numpy pandas geopandas plotly dash dash-bootstrap-components scipy
+    startCommand: python dashboard/app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
