@@ -1,0 +1,165 @@
+name: CI — Climate Resilience Index
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly CRI computation run (Monday 06:00 UTC)
+    - cron: "0 6 * * 1"
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # 1. Code Quality
+  # ─────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install linting tools
+        run: pip install ruff black isort
+
+      - name: Run Ruff (fast linter)
+        run: ruff check climate_resilience/ dashboard/ tests/
+
+      - name: Check Black formatting
+        run: black --check climate_resilience/ dashboard/ tests/
+
+      - name: Check import ordering
+        run: isort --check-only climate_resilience/ dashboard/ tests/
+
+  # ─────────────────────────────────────────────────────────────────
+  # 2. Tests
+  # ─────────────────────────────────────────────────────────────────
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-html
+
+      - name: Run test suite
+        run: |
+          pytest tests/ -v \
+            --cov=climate_resilience \
+            --cov-report=xml \
+            --cov-report=html \
+            --html=reports/test-report.html \
+            --self-contained-html
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: cri-coverage-${{ matrix.python-version }}
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-report-py${{ matrix.python-version }}
+          path: reports/test-report.html
+
+  # ─────────────────────────────────────────────────────────────────
+  # 3. Scheduled CRI Computation
+  # ─────────────────────────────────────────────────────────────────
+  compute-cri:
+    name: Weekly CRI Update
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[run-cri]')
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run CRI pipeline
+        run: |
+          python scripts/run_pipeline.py \
+            --context sahel \
+            --output data/processed/ \
+            --period $(date +%Y-Q%q)
+        env:
+          NASA_API_KEY: ${{ secrets.NASA_API_KEY }}
+          ERA5_API_KEY: ${{ secrets.ERA5_API_KEY }}
+
+      - name: Generate alert report
+        run: python scripts/generate_alerts.py --period latest
+
+      - name: Commit updated data
+        run: |
+          git config --local user.email "github-actions@github.com"
+          git config --local user.name "CRI Pipeline Bot"
+          git add data/processed/ reports/
+          git diff --staged --quiet || git commit -m "📊 Auto CRI update [$(date +%Y-%m-%d)]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────────────────────────────
+  # 4. Docker Build
+  # ─────────────────────────────────────────────────────────────────
+  docker:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/climate-resilience-index:latest
+            ghcr.io/${{ github.repository_owner }}/climate-resilience-index:${{ github.sha }}
+          cache-from: type=gfc
+          cache-to: type=gfc,mode=max
