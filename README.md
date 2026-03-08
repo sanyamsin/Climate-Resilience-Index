@@ -215,7 +215,7 @@ This tool was developed to support the **AdaptAction programme** (Expertise Fran
 
 ## 👤 Author
 
-**Tresor Niyomwungere**  
+**Serge Nyamsin**  
 MSc Data Science & AI | 12+ years humanitarian field experience  
 West & Central Africa specialist (Niger, Mali, Burkina Faso, Senegal, Mauritania, CAR)
 
