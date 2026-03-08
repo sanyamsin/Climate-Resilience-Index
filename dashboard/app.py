@@ -504,8 +504,8 @@ def update_distribution(country):
 
 if __name__ == "__main__":
     import os
-    port = int(os.environ.get("PORT", 8050))
-    debug = os.environ.get("RENDER", None) is None
+    port = int(os.environ.get("PORT", 7860))
+    debug = os.environ.get("SPACE_ID", None) is None
     print("\n🌡️  AdaptAction CRI Dashboard starting...")
     print(f"📍  http://localhost:{port}\n")
     app.run(debug=debug, host="0.0.0.0", port=port)
