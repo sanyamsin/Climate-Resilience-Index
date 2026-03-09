@@ -48,7 +48,7 @@ The **Climate Resilience Index (CRI)** is an open-source framework for computing
           ↑ thresholds      Livelihood ●
 ```
 
-▶ **[Live Demo](http://localhost:8050)** — run `python dashboard/app.py`
+▶ **[Live Demo](https://huggingface.co/spaces/Lokozu/Climate-Resilience-Index)** — run `python dashboard/app.py`
 
 ---
 
@@ -117,7 +117,7 @@ Weights are **context-calibrated** by agro-ecological zone: Sahelian, Guinean, C
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/your-username/Climate-Resilience-Index.git
+git clone https://github.com/sanyamsin/Climate-Resilience-Index.git
 cd Climate-Resilience-Index
 pip install -r requirements.txt
 ```
@@ -227,8 +227,8 @@ This tool was developed to support the **AdaptAction programme** (Expertise Fran
 MSc Data Science & AI | 12+ years humanitarian field experience  
 West & Central Africa specialist (Niger, Mali, Burkina Faso, Senegal, Mauritania, CAR)
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://linkedin.com/in/your-profile)
-[![GitHub](https://img.shields.io/badge/GitHub-Portfolio-black)](https://github.com/your-username)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://linkedin.com/in/serge-alain-nyamsin/)
+[![GitHub](https://img.shields.io/badge/GitHub-Portfolio-black)](https://github.com/sanyamsin)
 
 ---
 
