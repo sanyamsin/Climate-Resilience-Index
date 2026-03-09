@@ -1,3 +1,11 @@
+---
+title: Climate Resilience Index
+emoji: 🌡️
+colorFrom: red
+colorTo: green
+sdk: docker
+pinned: true
+---
 # 🌡️ Climate-Resilience-Index
 
 > **Territorialized Climate Resilience Monitoring System**  
